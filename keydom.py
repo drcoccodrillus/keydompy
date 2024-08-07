@@ -26,7 +26,8 @@ ENDPOINTS = {
     "enable-access-media": "/accessMedias/enable",
     "disable-access-media": "/accessMedias/disable",
     "update-balance-access-media": "/accessMedias/updateBalance",
-    "get-page-by-states-visit": "/visits/getPageByStates"
+    "get-page-by-states-visit": "/visits/getPageByStates",
+    "get-by-key-visit": "/visits/getByKey",
 }
 
 
@@ -559,3 +560,34 @@ class KeydomManager:
     # Get the list of all visits
     def get_all_visits(self, page_index=0, page_size=10):
         return self.get_visits(states=[0, 1, 2], page_index=page_index, page_size=page_size)
+
+
+    # Get the details of a visit
+    def get_visit_details(self, key):
+        self.login()
+
+        api_url = url_builder("get-by-key-visit")
+        data = {
+            "key": key
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.get_visit_details.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return response.json()
