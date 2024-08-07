@@ -16,6 +16,7 @@ ENDPOINTS = {
     "get-all-counters": "/counters/getAll",
     "get-all-access-bands": "/accessBands/getAll",
     "get-all-access-media-groups": "/accessMediaGroups/getAll",
+    "insert-internal": "/users/internal/insert",
     "insert-visitor": "/users/visitor/insert",
     "get-page-access-media": "/accessMedias/getPage",
     "get-page-by-filter-access-media": "/accessMedias/getPageByFilter",
@@ -201,6 +202,52 @@ class KeydomManager:
 
     # --- VISITORS ---
 
+    # Insert a new internal user
+    def insert_internal(self, uuid=None, first_name="Utente", last_name="Anonimo", qualification="Internal", registration_number=None, address=None, phone=None, mobile=None, email=None, notes=None, return_type="uuid"):
+        self.login()
+
+        api_url = url_builder("insert-internal")
+        data = {
+            "uuid": uuid,
+            "firstName": first_name,
+            "lastName": last_name,
+            "qualification": qualification,
+            "registrationNumber": registration_number,
+            "address": address,
+            "phone": phone,
+            "mobile": mobile,
+            "email": email,
+            "notes": notes
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.insert_internal.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        if return_type == "uuid":
+            return response.json()["data"]["uuid"]
+        elif return_type == "json":
+            return response.json()
+
+        return True
+
+
+    # Insert a new visitor
     def insert_visitor(self, uuid=None, first_name="Utente", last_name="Anonimo", qualification="External", registration_number="0000000", address="", phone="", mobile="", email="", document_number="0000000", return_type="uuid"):
         self.login()
 
