@@ -21,6 +21,7 @@ ENDPOINTS = {
     "insert-visitor": "/users/visitor/insert",
     "update-visitor": "/users/visitor/update",
     "insert-business": "/users/business/insert",
+    "update-business": "/users/business/update",
     "get-page-access-media": "/accessMedias/getPage",
     "get-page-by-filter-access-media": "/accessMedias/getPageByFilter",
     "insert-access-media": "/accessMedias/insert",
@@ -413,6 +414,44 @@ class KeydomManager:
             return response.json()["data"]["uuid"]
         elif return_type == "json":
             return response.json()
+
+        return True
+
+
+    # Update an existing business user
+    def update_business(self, uuid, name, address=None, phone=None, mobile=None, fax=None, email=None, notes=None):
+        self.login()
+
+        api_url = url_builder("update-business")
+        data = {
+            "uuid": uuid,
+            "name": name,
+            "address": address,
+            "phone": phone,
+            "mobile": mobile,
+            "fax": fax,
+            "email": email,
+            "notes": notes
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.put(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.update_business.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
 
         return True
 
