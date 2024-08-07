@@ -28,6 +28,7 @@ ENDPOINTS = {
     "update-balance-access-media": "/accessMedias/updateBalance",
     "get-page-by-states-visit": "/visits/getPageByStates",
     "get-by-key-visit": "/visits/getByKey",
+    "insert-visit": "/visits/insert",
 }
 
 
@@ -591,3 +592,63 @@ class KeydomManager:
             return False
 
         return response.json()
+
+
+    # Insert a new visit
+    def insert_visit(self, userUuid, uuid=None, start=time.time(), end=validity_end(time.time()), field1=None, field2=None, field3=None, notes=None, preVisitAccessMediaType=None, preVisitAccessMediaIdentifier=None, preVisitProfileUuid=None, visitFirstAccessMediaType=None, visitFirstAccessMediaIdentifier=None, visitFirstAccessMediaNumber=None, visitFirstProfileUuid=None, visitSecondAccessMediaType=None, visitSecondAccessMediaIdentifier=None, visitSecondAccessMediaNumber=None, visitSecondProfileUuid=None, visitThirdAccessMediaType=None, visitThirdAccessMediaIdentifier=None, visitThirdAccessMediaNumber=None, visitThirdProfileUuid=None, relatedUserUuid=None, openVisitNow=True, return_type="key"):
+        self.login()
+
+        api_url = url_builder("insert-visit")
+        data = {
+            "uuid": uuid,
+            "userUuid": userUuid,
+            "initialTimestamp": start,
+            "finalTimestamp": end,
+            "field1": field1,
+            "field2": field2,
+            "field3": field3,
+            "notes": notes,
+            "preVisitAccessMediaType": preVisitAccessMediaType,
+            "preVisitAccessMediaIdentifier": preVisitAccessMediaIdentifier,
+            "preVisitProfileUuid": preVisitProfileUuid,
+            "visitFirstAccessMediaType": visitFirstAccessMediaType,
+            "visitFirstAccessMediaIdentifier": visitFirstAccessMediaIdentifier,
+            "visitFirstAccessMediaNumber": visitFirstAccessMediaNumber,
+            "visitFirstProfileUuid": visitFirstProfileUuid,
+            "visitSecondAccessMediaType": visitSecondAccessMediaType,
+            "visitSecondAccessMediaIdentifier": visitSecondAccessMediaIdentifier,
+            "visitSecondAccessMediaNumber": visitSecondAccessMediaNumber,
+            "visitSecondProfileUuid": visitSecondProfileUuid,
+            "visitThirdAccessMediaType": visitThirdAccessMediaType,
+            "visitThirdAccessMediaIdentifier": visitThirdAccessMediaIdentifier,
+            "visitThirdAccessMediaNumber": visitThirdAccessMediaNumber,
+            "visitThirdProfileUuid": visitThirdProfileUuid,
+            "relatedUserUuid": relatedUserUuid,
+            "openVisitNow": openVisitNow
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.insert_visit.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        if return_type == "key":
+            return response.json()["data"]["key"]
+        elif return_type == "json":
+            return response.json()
+
+        return True
