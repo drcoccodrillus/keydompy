@@ -22,6 +22,7 @@ ENDPOINTS = {
     "update-visitor": "/users/visitor/update",
     "insert-business": "/users/business/insert",
     "update-business": "/users/business/update",
+    "delete-user": "/users/delete",
     "get-page-access-media": "/accessMedias/getPage",
     "get-page-by-filter-access-media": "/accessMedias/getPageByFilter",
     "insert-access-media": "/accessMedias/insert",
@@ -441,6 +442,37 @@ class KeydomManager:
         try:
             response = requests.put(api_url, headers=auth_header(self.token), json=data, verify=False)
             self.obj_details(self.update_business.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
+
+
+    # Delete a user
+    def delete_user(self, uuid):
+        self.login()
+
+        api_url = url_builder("delete-user")
+        data = {
+            "uuid": uuid
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.delete(api_url, headers=auth_header(self.token), params=data, verify=False)
+            self.obj_details(self.delete_user.__name__)   # Print the object details
         except requests.exceptions.RequestException as e:
             logging.error(e)
             return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
