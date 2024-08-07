@@ -17,6 +17,7 @@ ENDPOINTS = {
     "get-all-access-bands": "/accessBands/getAll",
     "get-all-access-media-groups": "/accessMediaGroups/getAll",
     "insert-internal": "/users/internal/insert",
+    "update-internal": "/users/internal/update",
     "insert-visitor": "/users/visitor/insert",
     "insert-business": "/users/business/insert",
     "get-page-access-media": "/accessMedias/getPage",
@@ -244,6 +245,46 @@ class KeydomManager:
             return response.json()["data"]["uuid"]
         elif return_type == "json":
             return response.json()
+
+        return True
+
+
+    # Update an existing internal user
+    def update_internal(self, uuid, first_name, last_name, qualification="Internal", registration_number=None, address=None, phone=None, mobile=None, email=None, notes=None):
+        self.login()
+
+        api_url = url_builder("update-internal")
+        data = {
+            "uuid": uuid,
+            "firstName": first_name,
+            "lastName": last_name,
+            "qualification": qualification,
+            "registrationNumber": registration_number,
+            "address": address,
+            "phone": phone,
+            "mobile": mobile,
+            "email": email,
+            "notes": notes
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.put(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.update_internal.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
 
         return True
 
