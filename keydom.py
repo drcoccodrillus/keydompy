@@ -32,6 +32,8 @@ ENDPOINTS = {
     "delete-visit": "/visits/delete",
     "open-visit": "/visits/open",
     "close-visit": "/visits/close",
+    "get-page-presence": "/presence/getPage",
+    "get-page-for-emergency-points": "/presence/getPageForEmergencyPoints",
 }
 
 
@@ -748,3 +750,69 @@ class KeydomManager:
             return False
 
         return True
+
+
+    # --- PRESENCE ---
+
+    # Get the list of presences
+    def get_presences(self, page_index=0, page_size=10):
+        self.login()
+
+        api_url = url_builder("get-page-presence")
+        data = {
+            "pageIndex": page_index,
+            "pageSize": page_size
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.get(api_url, headers=auth_header(self.token), params=data, verify=False)
+            self.obj_details(self.get_presences.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return response.json()
+
+
+    # Get the list of presences for emergency points
+    def get_presences_emergency_points(self, page_index=0, page_size=10):
+        self.login()
+
+        api_url = url_builder("get-page-for-emergency-points")
+        data = {
+            "pageIndex": page_index,
+            "pageSize": page_size
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.get(api_url, headers=auth_header(self.token), params=data, verify=False)
+            self.obj_details(self.get_presences_emergency_points.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return response.json()
