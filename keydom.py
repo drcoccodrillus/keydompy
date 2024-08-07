@@ -29,6 +29,7 @@ ENDPOINTS = {
     "get-page-by-states-visit": "/visits/getPageByStates",
     "get-by-key-visit": "/visits/getByKey",
     "insert-visit": "/visits/insert",
+    "delete-visit": "/visits/delete",
 }
 
 
@@ -650,5 +651,36 @@ class KeydomManager:
             return response.json()["data"]["key"]
         elif return_type == "json":
             return response.json()
+
+        return True
+
+
+    # Delete a visit
+    def delete_visit(self, key):
+        self.login()
+
+        api_url = url_builder("delete-visit")
+        data = {
+            "uuid": key
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.delete(api_url, headers=auth_header(self.token), params=data, verify=False)
+            self.obj_details(self.delete_visit.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
 
         return True
