@@ -292,7 +292,7 @@ class KeydomManager:
 
 
     # Insert a new visitor
-    def insert_visitor(self, uuid=None, first_name="Utente", last_name="Anonimo", qualification="External", registration_number="0000000", address="", phone="", mobile="", email="", document_number="0000000", return_type="uuid"):
+    def insert_visitor(self, uuid=None, first_name="Utente", last_name="Anonimo", qualification="External", registration_number=None, address=None, phone=None, mobile=None, email=None, document_number=None, return_type="uuid"):
         self.login()
 
         api_url = url_builder("insert-visitor")
@@ -377,7 +377,7 @@ class KeydomManager:
 
 
     # Insert a new business user
-    def insert_business(self, uuid=None, name="Business", address=None, phone=None, mobile=None, email=None, notes=None, return_type="uuid"):
+    def insert_business(self, uuid=None, name="Business", address=None, phone=None, mobile=None, fax=None, email=None, notes=None, return_type="uuid"):
         self.login()
 
         api_url = url_builder("insert-business")
@@ -387,6 +387,7 @@ class KeydomManager:
             "address": address,
             "phone": phone,
             "mobile": mobile,
+            "fax": fax,
             "email": email,
             "notes": notes
         }
