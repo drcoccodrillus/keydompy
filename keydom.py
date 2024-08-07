@@ -25,7 +25,8 @@ ENDPOINTS = {
     "unlink-access-media": "/accessMedias/unlink",
     "enable-access-media": "/accessMedias/enable",
     "disable-access-media": "/accessMedias/disable",
-    "update-balance-access-media": "/accessMedias/updateBalance"
+    "update-balance-access-media": "/accessMedias/updateBalance",
+    "get-page-by-states-visit": "/visits/getPageByStates"
 }
 
 
@@ -508,3 +509,53 @@ class KeydomManager:
             return False
 
         return True
+
+
+    # --- VISITS ---
+
+    def get_visits(self, states=[0], page_index=0, page_size=10):
+        self.login()
+
+        api_url = url_builder("get-page-by-states-visit")
+        data = {
+            "visitStates": states,
+            "pageIndex": page_index,
+            "pageSize": page_size
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.get(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.get_created_visits.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return response.json()
+
+    # Get the list of created visits
+    def get_created_visits(self, page_index=0, page_size=10):
+        return self.get_visits(states=[0], page_index=page_index, page_size=page_size)
+
+    # Get the list of in-progress visits
+    def get_in_progress_visits(self, page_index=0, page_size=10):
+        return self.get_visits(states=[1], page_index=page_index, page_size=page_size)
+
+    # Get the list of completed visits
+    def get_completed_visits(self, page_index=0, page_size=10):
+        return self.get_visits(states=[2], page_index=page_index, page_size=page_size)
+
+    # Get the list of all visits
+    def get_all_visits(self, page_index=0, page_size=10):
+        return self.get_visits(states=[0, 1, 2], page_index=page_index, page_size=page_size)
