@@ -23,6 +23,7 @@ ENDPOINTS = {
     "insert-business": "/users/business/insert",
     "update-business": "/users/business/update",
     "delete-user": "/users/delete",
+    "delete-by-type-user": "/users/deleteBy",
     "get-page-access-media": "/accessMedias/getPage",
     "get-page-by-filter-access-media": "/accessMedias/getPageByFilter",
     "insert-access-media": "/accessMedias/insert",
@@ -473,6 +474,37 @@ class KeydomManager:
         try:
             response = requests.delete(api_url, headers=auth_header(self.token), params=data, verify=False)
             self.obj_details(self.delete_user.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
+
+
+    # Delete a user by type
+    def delete_by_type_user(self, user_type):
+        self.login()
+
+        api_url = url_builder("delete-by-type-user")
+        data = {
+            "type": user_type
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.delete(api_url, headers=auth_header(self.token), params=data, verify=False)
+            self.obj_details(self.delete_by_type_user.__name__)   # Print the object details
         except requests.exceptions.RequestException as e:
             logging.error(e)
             return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
