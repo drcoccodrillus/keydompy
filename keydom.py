@@ -1,5 +1,7 @@
 import hashlib
+import logging
 import requests
+import time
 from datetime import datetime
 
 import config
@@ -13,8 +15,32 @@ ENDPOINTS = {
     "get-all-actions": "/actions/getAll",
     "get-all-counters": "/counters/getAll",
     "get-all-access-bands": "/accessBands/getAll",
-    "get-all-access-media-groups": "/accessMediaGroups/getAll"
+    "get-all-access-media-groups": "/accessMediaGroups/getAll",
+    "insert-visitor": "/users/visitor/insert",
+    "get-page-access-media": "/accessMedias/getPage",
+    "get-page-by-filter-access-media": "/accessMedias/getPageByFilter",
+    "insert-access-media": "/accessMedias/insert",
+    "update-access-media": "/accessMedias/update",
+    "delete-access-media": "/accessMedias/delete",
+    "unlink-access-media": "/accessMedias/unlink",
+    "enable-access-media": "/accessMedias/enable",
+    "disable-access-media": "/accessMedias/disable",
+    "update-balance-access-media": "/accessMedias/updateBalance"
 }
+
+
+# --- AUXILIARY FUNCTIONS ---
+def validity_end(start):
+    # Convert start to a datetime object
+    start_datetime = datetime.fromtimestamp(start)
+
+    # Get the end time, which is 23:59:59 of the same day
+    end_datetime = start_datetime.replace(hour=23, minute=59, second=59, microsecond=0)
+
+    # Optionally, if you want end as a timestamp
+    end = end_datetime.timestamp()
+
+    return end
 
 
 def hash_md5(text, to_upper=False):
@@ -24,9 +50,16 @@ def hash_md5(text, to_upper=False):
     return result
 
 
-def auth_header(token):
+def auth_header_json(token):
     header = {
         'Content-Type': 'application/json',
+        'fio-access-token': token
+    }
+    return header
+
+
+def auth_header(token):
+    header = {
         'fio-access-token': token
     }
     return header
@@ -100,47 +133,378 @@ class KeydomManager:
         print("--------------------")
         print("\n")
 
+    # Login to Keydom
     def login(self):
         api_url = url_builder("login")
         data = {
             'username': self.USERNAME,
             'passwordHash': self.PASSWORDHASH
         }
+        logging.info(api_url)
+        logging.info(data)
 
         try:
             response = requests.post(api_url, data=data, verify=False)
             self.token = response.json()["data"]["token"]
             self.obj_details(self.login.__name__)   # Print the object details
-        except Exception as e:
+            logging.info(response.json())
+            logging.info("Token: %s", self.token)
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
             return {"error": True, "date": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), "message": "Exception", "data": str(e)}
 
         check_response(response, "Logged in", "Login failed")
 
-        return False
+        return True
 
+    # Logout from Keydom
     def logout(self):
         api_url = url_builder("logout")
+        logging.info(api_url)
 
         try:
             response = requests.post(api_url, headers=auth_header(self.token), verify=False)
             self.obj_details(self.logout.__name__)   # Print the object details
-        except Exception as e:
+            logging.info(response.json())
+            logging.info("Response: %s", response.text)
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
             return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
 
         check_response(response, "Logged out", "Logout failed")
 
-        return False
+        return True
 
+    # Check if the Keydom authentication token is valid
     def is_valid(self):
-        # Check if the authentication token is valid
         api_url = url_builder("get-all-access-bands")
 
         try:
             response = requests.get(api_url, headers=auth_header(self.token), verify=False)
             self.obj_details(self.is_valid.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        return True
+
+
+    # --- VISITORS ---
+
+    def insert_visitor(self, uuid=None, first_name="Utente", last_name="Anonimo", qualification="External", registration_number="0000000", address="", phone="", mobile="", email="", document_number="0000000", return_type="uuid"):
+        self.login()
+
+        api_url = url_builder("insert-visitor")
+        data = {
+            "uuid": uuid,
+            "firstName": first_name,
+            "lastName": last_name,
+            "qualification": qualification,
+            "registrationNumber": registration_number,
+            "address": address,
+            "phone": phone,
+            "mobile": mobile,
+            "email": email,
+            "documentNumber": document_number
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.insert_visitor.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        if return_type == "uuid":
+            return response.json()["data"]["uuid"]
+        elif return_type == "json":
+            return response.json()
+
+        return True
+
+
+    # --- ACCESS MEDIAS ---
+
+    # Insert a new badge
+    def insert_access_media(self, identifier, uuid=None, mediaTypeCode=0, number=None, enabled=True, validityStart=time.time(), validityEnd=validity_end(time.time()), validityMode=0, antipassbackEnabled=True, countingEnabled=True, userUuid=None, profileUuidOrName=None, lifeCycleMode=0, relatedAccessMediaNumber=None):
+        self.login()
+
+        api_url = url_builder("insert-access-media")
+        data = {
+            "uuid": uuid,
+            "identifier": identifier,
+            "mediaTypeCode": mediaTypeCode,
+            "number": number,
+            "enabled": enabled,
+            "validityStart": validityStart,
+            "validityEnd": validityEnd,
+            "validityMode": validityMode,
+            "antipassbackEnabled": antipassbackEnabled,
+            "countingEnabled": countingEnabled,
+            "userUuid": userUuid,
+            "profileUuidOrName": profileUuidOrName,
+            "lifeCycleMode": lifeCycleMode,
+            "relatedAccessMediaNumber": relatedAccessMediaNumber
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.insert_access_media.__name__)   # Print the object details
         except Exception as e:
             return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
 
         check_response(response)
 
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+            return response.json()
+        elif response.status_code == 400:
+            logging.error(response.json())
+            return response.json()
+
         return False
+
+
+    # Update an existing badge
+    def update_access_media(self, uuid, identifier, mediaTypeCode=0, enabled=True, validityStart=time.time(), validityEnd=validity_end(time.time()), validityMode=0, antipassbackEnabled=True, countingEnabled=True, userUuid=None, profileUuidOrName=None, lifeCycleMode=0):
+        self.login()
+
+        api_url = url_builder("update-access-media")
+        data = {
+            "uuid": uuid,
+            "identifier": identifier,
+            "mediaTypeCode": mediaTypeCode,
+            "enabled": enabled,
+            "validityStart": validityStart,
+            "validityEnd": validityEnd,
+            "validityMode": validityMode,
+            "antipassbackEnabled": antipassbackEnabled,
+            "countingEnabled": countingEnabled,
+            "userUuid": userUuid,
+            "profileUuidOrName": profileUuidOrName,
+            "lifeCycleMode": lifeCycleMode
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.put(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.update_access_media.__name__)   # Print the object details
+        except Exception as e:
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+            return response.json()
+
+        return False
+
+
+    # Enable a badge
+    def enable_access_media(self, uuid):
+        self.login()
+
+        api_url = url_builder("enable-access-media")
+        data = {
+            "uuid": uuid
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.put(api_url, headers=auth_header(self.token), data=data, verify=False)
+            self.obj_details(self.enable_access_media.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
+
+
+    # Disable a badge
+    def disable_access_media(self, uuid):
+        self.login()
+
+        api_url = url_builder("disable-access-media")
+        data = {
+            "uuid": uuid
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.put(api_url, headers=auth_header(self.token), data=data, verify=False)
+            self.obj_details(self.disable_access_media.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+        
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
+
+
+    # Unlink a badge from a user
+    def unlink_access_media(self, id_badge):
+        self.login()
+
+        api_url = url_builder("unlink-access-media")
+        data = {
+            "uuid": id_badge
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.put(api_url, headers=auth_header(self.token), data=data, verify=False)
+            self.obj_details(self.unlink_access_media.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response, "Badge reset", "Badge reset failed")
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
+
+
+    # Get uuid of a badge starting from the badge number
+    def get_access_media_uuid(self, badge_number):
+        self.login()
+
+        api_url = url_builder("get-page-by-filter-access-media")
+        data = {
+            "pageIndex": 0,
+            "pageSize": 1,
+            "numberFilterPattern": str(badge_number)
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.get_access_media_uuid.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return response.json()["data"][0]["uuid"]
+
+
+    # Get identifier of a badge starting from the badge number
+    def get_access_media_identifier(self, badge_number):
+        self.login()
+
+        api_url = url_builder("get-page-by-filter-access-media")
+        data = {
+            "pageIndex": 0,
+            "pageSize": 1,
+            "numberFilterPattern": str(badge_number)
+            }
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.get_access_media_uuid.__name__)   # Print the object details
+            logging.info(response.json())
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        return response.json()["data"][0]["identifier"]
+
+
+    # Update the balance of a badge
+    def update_balance_access_media(self, uuid, balance):
+        self.login()
+
+        api_url = url_builder("update-balance-access-media")
+        data = {
+            "uuid": uuid,
+            "balance": balance
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.put(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.update_balance_access_media.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
