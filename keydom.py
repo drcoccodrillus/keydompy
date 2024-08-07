@@ -30,6 +30,8 @@ ENDPOINTS = {
     "get-by-key-visit": "/visits/getByKey",
     "insert-visit": "/visits/insert",
     "delete-visit": "/visits/delete",
+    "open-visit": "/visits/open",
+    "close-visit": "/visits/close",
 }
 
 
@@ -670,6 +672,68 @@ class KeydomManager:
         try:
             response = requests.delete(api_url, headers=auth_header(self.token), params=data, verify=False)
             self.obj_details(self.delete_visit.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
+
+
+    # Open a visit
+    def open_visit(self, key):
+        self.login()
+
+        api_url = url_builder("open-visit")
+        data = {
+            "uuid": key
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.open_visit.__name__)   # Print the object details
+        except requests.exceptions.RequestException as e:
+            logging.error(e)
+            return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
+
+        check_response(response)
+
+        self.logout()
+
+        if response.status_code == 200:
+            logging.info(response.json())
+        else:
+            return False
+
+        return True
+
+
+    # Close a visit
+    def close_visit(self, key):
+        self.login()
+
+        api_url = url_builder("close-visit")
+        data = {
+            "uuid": key
+        }
+
+        logging.info(api_url)
+        logging.info(data)
+
+        try:
+            response = requests.post(api_url, headers=auth_header(self.token), json=data, verify=False)
+            self.obj_details(self.close_visit.__name__)   # Print the object details
         except requests.exceptions.RequestException as e:
             logging.error(e)
             return {"error": True, "date": datetime.now().strftime("%m/%d/%Y"), "time": datetime.now().strftime("%H:%M:%S"), "message": "Exception", "data": str(e)}
