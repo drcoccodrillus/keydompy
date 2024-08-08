@@ -104,7 +104,7 @@ This package is intended for developers who need to interact with the Keydom sys
 
 ### Prerequisites
 
-- Python 3.6 or higher
+- Python 3.8 or higher
 - pip
 
 <a id="package-installation"></a>
