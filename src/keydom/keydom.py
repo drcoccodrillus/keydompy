@@ -702,14 +702,14 @@ class KeydomManager:
 
 
     # Get uuid of a badge starting from the badge number
-    def get_access_media_uuid(self, badge_number):
+    def get_access_media_uuid(self, number):
         self.login()
 
         api_url = url_builder("get-page-by-filter-access-media")
         data = {
             "pageIndex": 0,
             "pageSize": 1,
-            "numberFilterPattern": str(badge_number)
+            "numberFilterPattern": str(number)
         }
 
         logging.info(api_url)
@@ -735,14 +735,14 @@ class KeydomManager:
 
 
     # Get identifier of a badge starting from the badge number
-    def get_access_media_identifier(self, badge_number):
+    def get_access_media_identifier(self, number):
         self.login()
 
         api_url = url_builder("get-page-by-filter-access-media")
         data = {
             "pageIndex": 0,
             "pageSize": 1,
-            "numberFilterPattern": str(badge_number)
+            "numberFilterPattern": str(number)
             }
         logging.info(api_url)
         logging.info(data)
@@ -845,12 +845,12 @@ class KeydomManager:
 
 
     # Get the details of a visit
-    def get_visit_details(self, key):
+    def get_visit_details(self, uuid):
         self.login()
 
         api_url = url_builder("get-by-key-visit")
         data = {
-            "key": key
+            "uuid": uuid
         }
 
         logging.info(api_url)
@@ -936,12 +936,12 @@ class KeydomManager:
 
 
     # Delete a visit
-    def delete_visit(self, key):
+    def delete_visit(self, uuid):
         self.login()
 
         api_url = url_builder("delete-visit")
         data = {
-            "uuid": key
+            "uuid": uuid
         }
 
         logging.info(api_url)
