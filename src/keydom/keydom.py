@@ -1,10 +1,10 @@
 import hashlib
 import logging
+import os
 import requests
 import time
 from datetime import datetime
 
-import config
 
 ENDPOINTS = {
     "login": "/authentication/login",
@@ -82,7 +82,7 @@ def auth_header(token):
 
 def url_builder(endpoint):
     tail = ENDPOINTS[endpoint]
-    return f'{config.protocol}://{config.ip}/keydom/api-external{tail}'
+    return f'{os.getenv("KEYDOM_PROTOCOL")}://{os.getenv("KEYDOM_IP")}/keydom/api-external{tail}'
 
 
 def check_response(response, message1="Token is valid", message2="Token is invalid", message3="Communication with Keydom is down"):
@@ -105,8 +105,8 @@ def check_response(response, message1="Token is valid", message2="Token is inval
 
 class KeydomManager:
     def __init__(self):
-        self.USERNAME = config.username
-        self.PASSWORD = config.password
+        self.USERNAME = os.getenv("KEYDOM_USERNAME")
+        self.PASSWORD = os.getenv("KEYDOM_PASSWORD")
         self.PASSWORDHASH = hash_md5(self.PASSWORD, True)
 
         self.token = None
