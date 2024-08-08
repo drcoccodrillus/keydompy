@@ -75,7 +75,8 @@
 </details>
 
 
-<!-- GETTING STARTED -->
+<a id="introduction"></a>
+
 ## Introduction
 
 <a id="about-the-project"></a>
@@ -112,7 +113,7 @@ This package is intended for developers who need to interact with the Keydom sys
 
 - Use pip to install the pre-builded package `pip install keydom`
 
-<a id="environment variables"></a>
+<a id="environment-variables"></a>
 
 ### Environment variables
 
@@ -646,7 +647,8 @@ Project Link: [https://github.com/drcoccodrillus/keydompy](https://github.com/dr
 <p align="right">(<a href="#readme-top">go to top</a>)</p>
 
 
-<!-- ACKNOWLEDGMENTS -->
+<a id="acknowledgments"></a>
+
 ## Acknowledgments
 
 * [FAAC](https://faac.it/)
@@ -655,7 +657,7 @@ Project Link: [https://github.com/drcoccodrillus/keydompy](https://github.com/dr
 * [GitHub Pages](https://pages.github.com)
 
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#readme-top">go to top</a>)</p>
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
