@@ -1,6 +1,3 @@
-# keydom.py
-
-
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 <!--
@@ -437,6 +434,12 @@ km.get_access_media_identifier('99133')
 Parameters:
 - `uuid` (str, required): The ID of the access media
 - `balance` (int, required): The balance of the access media
+
+Usage examples:
+
+```
+km.update_balance_access_media('63d59ede-62b2-427f-877a-1a28197c2a71', balance=100)
+```
 
 <p align="right">(<a href="#access-media-management">go to access media management</a>)</p>
 
